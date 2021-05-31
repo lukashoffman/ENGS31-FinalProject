@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------------
--- Company:     Engs 31 / COSC 56
+-- Company:     Engs 31, 20X
 -- Engineer:    Lukas Hoffman
 -- 
 -- Create Date: 
@@ -13,7 +13,7 @@
 -- Dependencies: 
 -- 
 -- Revision:
--- Revision 0.02 - Working testbench
+-- Revision 0.03 - Updated testbench for new functional block.
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
@@ -32,32 +32,35 @@ end morse_decoder_tb;
 
 architecture Behavioral of morse_decoder_tb is
 
-signal new_char, morse_bit, next_char:  STD_LOGIC := '0';
-signal ready, clk:   STD_LOGIC := '1';
+signal new_char, morse_bit, next_char, morse_sig:  STD_LOGIC := '0';
+signal clk:   STD_LOGIC := '1';
 signal bin: STD_LOGIC_VECTOR (7 downto 0) := (others => '0');
 signal clk_period:  time := 10 ns;
 
 signal counter: integer := 0;
 component morse_decoder is
   Port (
-    bin:    in std_logic_vector (7 downto 0);
-    clk:    in std_logic;
-    ready:  in std_logic;
-    new_char:   in std_logic;
-    morse_bit:  out std_logic;
-    next_char:  out std_logic
+    bin:         in std_logic_vector (7 downto 0);
+    clk:         in std_logic;
+    new_char:    in std_logic;
+    next_char:   out std_logic;
+    morse_sig:       out std_logic
     );
 end component;
 
 begin
-
+update_char:    process(clk, next_char)
+begin
+if rising_edge(clk) then
+    new_char <= next_char;
+end if;
+end process;
 uut: morse_decoder port map(
     bin => bin,
     clk => clk,
-    ready => ready,
     new_char => new_char,
-    morse_bit => morse_bit,
-    next_char => next_char
+    next_char => next_char,
+    morse_sig => morse_sig
 );
 clk_process: process
 begin
@@ -69,25 +72,12 @@ end process;
 
 stim_process: process
 begin
-    bin <= "00100001";
+    bin <= "00100010";
     wait for 8 * clk_period;
-    bin <= "01000110"; 
+    bin <= "01000111"; 
+    wait for 8*clk_period;
+    bin <= "10011110";
     wait;
 end process;
 
-ready_process: process(clk, morse_bit, counter)
-begin
-    if rising_edge(clk) then
-        counter <= counter + 1;
-        if counter = 3 and morse_bit = '1' then
-            counter <= 0;
-            ready <= '1';
-        elsif counter = 1 and morse_bit = '0' then
-            counter <= 0;
-            ready <= '1';
-        else ready <= '0';
-        end if;
-    end if;
-    new_char <= next_char;
-end process;
 end Behavioral;

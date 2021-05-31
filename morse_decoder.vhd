@@ -13,7 +13,8 @@
 -- Dependencies: 
 -- 
 -- Revision:
--- Revision 0.02 - Working prototype
+-- Revision 0.03 - Added output generator
+-- August 2020:  Added an accumulator overflow test (EWH)
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
@@ -29,37 +30,70 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity morse_decoder is
   Port (
-  	bin:	in std_logic_vector (7 downto 0);
-  	clk:	in std_logic;
-  	ready:	in std_logic;
-  	new_char:	in std_logic;
-  	morse_bit:	out std_logic;
-  	next_char:	out std_logic
+  	bin:	     in std_logic_vector (7 downto 0);
+  	clk:	     in std_logic;
+  	new_char:    in std_logic;
+  	next_char:   out std_logic;
+  	morse_sig:       out std_logic
   	);
 end morse_decoder;
 
 architecture Behavioral of morse_decoder is
-	signal curr: INTEGER := 0;
-	signal bin_copy:   STD_LOGIC_VECTOR (7 downto 0) := (others => '0');
+	signal curr: INTEGER := -1;
+	signal bin_copy:    STD_LOGIC_VECTOR (7 downto 0) := (others => '0');
+	signal ready:	    std_logic := '1';
+	signal morse_bit:	std_logic;
+    signal counter:     integer := 0;
+    signal enable:      STD_LOGIC := '0';
 begin
 
-
-send_bit:	process(ready, curr, clk, bin)
+send_bit:	process(ready, curr, clk, bin, new_char)
 	begin
 		if rising_edge(clk) then
 		  if new_char = '1' then
 		        bin_copy <= bin;
-				if bin(7) = '1' then curr <= 5;
-				else curr <= to_integer(unsigned(bin(6 downto 5))) +1;
+				if bin(7) = '1' then curr <= 4;
+				else curr <= to_integer(unsigned(bin(6 downto 4))-1);
 				end if;
-		  elsif ready = '1' then
-				if curr > -1 then morse_bit <= bin_copy(curr);
+		  elsif ready = '1'then
+				if curr > -1 then 
+				morse_bit <= bin_copy(curr);
 				curr <= curr - 1;
 				end if;
 		  end if;
 		end if;
-		if curr = -1 then next_char <= '1';
+		
+		if curr <= -1  OR bin_copy(7 downto 4) = "0000" then next_char <= '1';
 		else next_char <= '0';
 		end if;
 	end process;
+	
+generate_proc: process(clk, morse_bit, counter)
+begin
+    if rising_edge(clk) then
+    if enable = '1' then
+        counter <= counter + 1;
+        if counter = 3 and morse_bit = '1' then
+            counter <= 0;
+            ready <= '1';
+        elsif counter = 1 and morse_bit = '0' then
+            counter <= 0;
+            ready <= '1';
+        else 
+            ready <= '0';
+        end if;
+    else ready <= '1';
+    end if;
+    end if;
+    
+    morse_sig <= not(ready);
+end process;
+
+enable_proc:    process(new_char, enable)
+begin
+    if curr > -1 and enable = '0' then enable <= '1';
+    elsif curr < -1 then enable <= '0';
+    end if;
+end process;
+
 end Behavioral;
