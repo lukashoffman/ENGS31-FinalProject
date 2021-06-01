@@ -13,7 +13,7 @@
 -- Dependencies: 
 -- 
 -- Revision:
--- Revision 0.03 - Added output generator
+-- Revision 0.01 - File Created
 -- August 2020:  Added an accumulator overflow test (EWH)
 -- Additional Comments:
 -- 
@@ -32,67 +32,83 @@ entity morse_decoder is
   Port (
   	bin:	     in std_logic_vector (7 downto 0);
   	clk:	     in std_logic;
-  	new_char:    in std_logic;
+  	start_stop:       in std_logic;
   	next_char:   out std_logic;
   	morse_sig:       out std_logic
   	);
 end morse_decoder;
 
 architecture Behavioral of morse_decoder is
-	signal curr: INTEGER := -1;
-	signal bin_copy:    STD_LOGIC_VECTOR (7 downto 0) := (others => '0');
-	signal ready:	    std_logic := '1';
-	signal morse_bit:	std_logic;
-    signal counter:     integer := 0;
-    signal enable:      STD_LOGIC := '0';
+signal bin_pos, dit_counter: integer := 0;
+signal tc_control:  integer := 0;
+signal decrement:   STD_LOGIC := '0';
+signal enable:      STD_LOGIC := '0';
+signal test:        STD_LOGIC;
+signal addflag:     STD_LOGIC := '0';
 begin
 
-send_bit:	process(ready, curr, clk, bin, new_char)
-	begin
-		if rising_edge(clk) then
-		  if new_char = '1' then
-		        bin_copy <= bin;
-				if bin(7) = '1' then curr <= 4;
-				else curr <= to_integer(unsigned(bin(6 downto 4))-1);
-				end if;
-		  elsif ready = '1'then
-				if curr > -1 then 
-				morse_bit <= bin_copy(curr);
-				curr <= curr - 1;
-				end if;
-		  end if;
-		end if;
-		
-		if curr <= -1  OR bin_copy(7 downto 4) = "0000" then next_char <= '1';
-		else next_char <= '0';
-		end if;
-	end process;
-	
-generate_proc: process(clk, morse_bit, counter)
+test <= bin(bin_pos);
+process(enable, decrement)
 begin
-    if rising_edge(clk) then
-    if enable = '1' then
-        counter <= counter + 1;
-        if counter = 3 and morse_bit = '1' then
-            counter <= 0;
-            ready <= '1';
-        elsif counter = 1 and morse_bit = '0' then
-            counter <= 0;
-            ready <= '1';
-        else 
-            ready <= '0';
-        end if;
-    else ready <= '1';
+    if enable = '1' then morse_sig <= not(decrement);
+    else morse_sig <= '0';
     end if;
-    end if;
-    
-    morse_sig <= not(ready);
 end process;
 
-enable_proc:    process(new_char, enable)
+generate_morse: process(clk, bin, bin_pos, start_stop, decrement)
 begin
-    if curr > -1 and enable = '0' then enable <= '1';
-    elsif curr < -1 then enable <= '0';
+    if rising_edge(clk) then
+        if enable = '1' then
+            dit_counter <= dit_counter + 1;  
+            if start_stop = '1' then enable <= '0'; 
+            elsif dit_counter = 3 AND bin(bin_pos) = '1' then
+                dit_counter <= 0;
+                decrement <= '1';
+            
+                if bin_pos = 0 then next_char <= '1';
+                else next_char <= '0';
+                end if;
+            
+            elsif dit_counter = 1 AND bin(bin_pos) = '0' then
+                dit_counter <= 0;
+               -- morse_sig <= '0';
+                decrement <= '1';
+            
+                if bin_pos = 0 then next_char <= '1';
+                else next_char <= '0';
+                end if;
+            else 
+                --morse_sig <= '1';
+                next_char <= '0';
+                decrement <= '0';
+            end if;
+        elsif start_stop = '1' then
+            enable <= '1';
+            dit_counter <= 0;
+            --morse_sig <= '0';
+            decrement <= '1'; 
+        end if;
+    end if;
+end process;
+
+bin_count:  process(clk, bin, bin_pos, decrement, tc_control, addflag)
+begin
+     CASE bin(7) is 
+            when '1' =>
+                tc_control <= 4;
+            when others =>
+                tc_control <= to_integer(unsigned(bin(6 downto 4))-1);
+    end CASE;
+    if rising_edge(clk) then
+        if decrement = '1' AND bin_pos > 0 then bin_pos <= bin_pos -1;
+        elsif decrement = '1' AND bin_pos = 0 then
+            bin_pos <= tc_control;
+            addflag <= '1';
+        end if;
+        if addflag = '1' then
+            bin_pos <= tc_control;
+            addflag <= '0';
+        end if;    
     end if;
 end process;
 
