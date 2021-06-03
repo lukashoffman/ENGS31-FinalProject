@@ -36,7 +36,7 @@ signal next_char, morse_sig, start:  STD_LOGIC := '0';
 signal clk:   STD_LOGIC := '1';
 signal bin: STD_LOGIC_VECTOR (7 downto 0) := "00100001";
 type QUEUETEST is array (0 to 5) of STD_LOGIC_VECTOR (7 downto 0);
-signal qt:  QUEUETEST := ("00100001", "00110100", "10011101", "00010000", "01001001", "00000000");
+signal qt:  QUEUETEST := ("00100001", "11000000", "11010101", "00010001", "00100010", "00000000");
 signal qt_p: integer := 0;
 signal clk_period:  time := 10 ns;
 

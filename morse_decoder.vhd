@@ -30,11 +30,11 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity morse_decoder is
   Port (
-  	bin:	     in std_logic_vector (7 downto 0);
-  	clk:	     in std_logic;
-  	start_stop:       in std_logic;
-  	next_char:   out std_logic;
-  	morse_sig:       out std_logic
+  	bin:	     in std_logic_vector (7 downto 0); --Our binary encoded morse string
+  	clk:	     in std_logic;     --Divided clock
+  	start_stop:       in std_logic;--Monopulse input to start or stop reading out
+  	next_char:   out std_logic := '0';    --Output to signal the queue to send the next signal
+  	morse_sig:       out std_logic --The output of our signal
   	);
 end morse_decoder;
 
@@ -45,47 +45,69 @@ signal decrement:   STD_LOGIC := '0';
 signal enable:      STD_LOGIC := '0';
 signal test:        STD_LOGIC;
 signal addflag:     STD_LOGIC := '0';
+signal count_space:  STD_LOGIC := '0';
 begin
 
 test <= bin(bin_pos);
-process(enable, decrement)
+process(enable, decrement, count_space)
 begin
-    if enable = '1' then morse_sig <= not(decrement);
-    else morse_sig <= '0';
+    if enable = '1' AND count_space = '0' AND bin /= "11000000" then morse_sig <= not(decrement); --When not moving between bits or in a space, we are in a dit or dah
+    else morse_sig <= '0'; --When moving between bits or in a space
     end if;
 end process;
 
-generate_morse: process(clk, bin, bin_pos, start_stop, decrement)
+generate_morse: process(clk, bin, bin_pos, start_stop, decrement, count_space)
 begin
     if rising_edge(clk) then
         if enable = '1' then
             dit_counter <= dit_counter + 1;  
-            if start_stop = '1' then enable <= '0'; 
-            elsif dit_counter = 3 AND bin(bin_pos) = '1' then
+            
+            if start_stop = '1' then enable <= '0';  --Disable if triggered
+                      
+            elsif count_space = '1' and dit_counter = 2 then
+                dit_counter <= 1;
+                count_space <= '0';
+                decrement <= '0';
+            
+            elsif bin = "11000000" and count_space = '0' then --Special case for space. Reset after one tick. 
+                decrement <= '1';
+                count_space <= '1';
+                next_char <= '1';
+                dit_counter <= 0;
+                
+            elsif dit_counter = 3 AND bin(bin_pos) = '1' AND count_space = '0' then --Reset after three highs if 'dah'
                 dit_counter <= 0;
                 decrement <= '1';
+                next_char <= '0';
             
-                if bin_pos = 0 then next_char <= '1';
-                else next_char <= '0';
+                if bin_pos = 0 then 
+                    count_space <= '1';
+                    next_char <= '1';
+                else 
+                    count_space <= '0';
+                    next_char <= '0';
                 end if;
             
-            elsif dit_counter = 1 AND bin(bin_pos) = '0' then
+            elsif dit_counter = 1 AND bin(bin_pos) = '0' AND count_space = '0' then --Reset after one high if 'dit'
                 dit_counter <= 0;
-               -- morse_sig <= '0';
                 decrement <= '1';
+                next_char <= '0';
             
-                if bin_pos = 0 then next_char <= '1';
-                else next_char <= '0';
+                if bin_pos = 0 then 
+                    count_space <= '1';
+                    next_char <= '1';
+                else 
+                    count_space <= '0';
+                    next_char <= '0';
                 end if;
-            else 
-                --morse_sig <= '1';
+            else --Otherwise just count high
                 next_char <= '0';
                 decrement <= '0';
             end if;
         elsif start_stop = '1' then
             enable <= '1';
             dit_counter <= 0;
-            --morse_sig <= '0';
+
             decrement <= '1'; 
         end if;
     end if;
@@ -95,16 +117,23 @@ bin_count:  process(clk, bin, bin_pos, decrement, tc_control, addflag)
 begin
      CASE bin(7) is 
             when '1' =>
-                tc_control <= 4;
+                if bin(6) = '1' then
+                    if bin(5 downto 0) = "000000" then tc_control <= 0;
+                    else tc_control <= 5;
+                    end if;
+                else tc_control <= 4;
+                end if;
             when others =>
                 tc_control <= to_integer(unsigned(bin(6 downto 4))-1);
     end CASE;
     if rising_edge(clk) then
         if decrement = '1' AND bin_pos > 0 then bin_pos <= bin_pos -1;
+        
         elsif decrement = '1' AND bin_pos = 0 then
             bin_pos <= tc_control;
             addflag <= '1';
         end if;
+        
         if addflag = '1' then
             bin_pos <= tc_control;
             addflag <= '0';
