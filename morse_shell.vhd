@@ -36,9 +36,9 @@ port (
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     --7 Segment Display
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    seg	: out std_logic_vector(0 to 6);
-    dp    : out std_logic;
-    an 	: out std_logic_vector(3 downto 0);  
+    --seg	: out std_logic_vector(0 to 6);
+    --dp    : out std_logic;
+    --an 	: out std_logic_vector(3 downto 0);  
      
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     --SCI receiver
@@ -90,26 +90,26 @@ end component;
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --7 Segment Display
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-component mux7seg is
-    Port ( 	clk : in  STD_LOGIC; 
-           	y0, y1, y2, y3 : in  STD_LOGIC_VECTOR (3 downto 0);	
-           	dp_set : in std_logic_vector(3 downto 0);					
-           	seg : out  STD_LOGIC_VECTOR (0 to 6);	
-          	dp : out std_logic;
-           	an : out  STD_LOGIC_VECTOR (3 downto 0) );			
-end component;
+--component mux7seg is
+--    Port ( 	clk : in  STD_LOGIC; 
+--           	y0, y1, y2, y3 : in  STD_LOGIC_VECTOR (3 downto 0);	
+--           	dp_set : in std_logic_vector(3 downto 0);					
+--           	seg : out  STD_LOGIC_VECTOR (0 to 6);	
+--          	dp : out std_logic;
+--           	an : out  STD_LOGIC_VECTOR (3 downto 0) );			
+--end component;
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --7 Segment Display
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-COMPONENT blk_mem_gen_0
-  PORT ( 
-    clka : IN STD_LOGIC;
-    ena : IN STD_LOGIC;
-    addra : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
-    douta : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)
-  );
-END COMPONENT;
+--COMPONENT blk_mem_gen_0
+--  PORT ( 
+--    clka : IN STD_LOGIC;
+--    ena : IN STD_LOGIC;
+--    addra : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
+--    douta : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)
+--  );
+--END COMPONENT;
  
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --SCI Serial receiver
@@ -158,11 +158,11 @@ signal next_char : std_logic;
 signal submit: std_logic := '0';
 signal write_enable, read_enable, start_stop, speed_select : std_logic;
 
-signal to_mux7seg_y3 : std_logic_vector(3 downto 0) := (others => '0');
-signal to_mux7seg_y2 : std_logic_vector(3 downto 0) := (others => '0');
-signal to_mux7seg_y1 : std_logic_vector(3 downto 0) := (others => '0');
-signal to_mux7seg_y0 : std_logic_vector(3 downto 0) := (others => '0');
-signal measured_voltage : std_logic_vector(15 downto 0) := (others => '0');
+--signal to_mux7seg_y3 : std_logic_vector(3 downto 0) := (others => '0');
+--signal to_mux7seg_y2 : std_logic_vector(3 downto 0) := (others => '0');
+--signal to_mux7seg_y1 : std_logic_vector(3 downto 0) := (others => '0');
+--signal to_mux7seg_y0 : std_logic_vector(3 downto 0) := (others => '0');
+--signal measured_voltage : std_logic_vector(15 downto 0) := (others => '0');
 
 signal read_sig, write_sig: STD_LOGIC;
 -------------------------
@@ -227,7 +227,7 @@ MorseController: Controller PORT MAP(
 	     speed_select  => speed_select
 	     );
 	     
-read_write_enable: process(read_enable, write_enable, next_char)
+read_write_enable: process(read_enable, write_enable, next_char, rx_done_tick)
 begin
     if read_enable = '1' then 
         read_sig <= next_char;
