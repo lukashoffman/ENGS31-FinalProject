@@ -51,7 +51,6 @@ port (
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     --Decoder
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    next_char : out std_logic;
     morse_sig : out std_logic );
    
 end morse_shell;
@@ -154,10 +153,9 @@ signal RsRx : std_logic := '0';
 signal rx_data : std_logic_vector(7 downto 0);
 signal rx_done_tick : std_logic;
 
-signal Write, read : std_logic := '0';
 signal Data_out : std_logic_vector(7 downto 0);
 signal full,empty : std_logic;
-
+signal next_char : std_logic;
 signal submit: std_logic := '0';
 signal write_enable, read_enable, start_stop, speed_select : std_logic;
 
@@ -166,7 +164,8 @@ signal to_mux7seg_y2 : std_logic_vector(3 downto 0) := (others => '0');
 signal to_mux7seg_y1 : std_logic_vector(3 downto 0) := (others => '0');
 signal to_mux7seg_y0 : std_logic_vector(3 downto 0) := (others => '0');
 signal measured_voltage : std_logic_vector(15 downto 0) := (others => '0');
-        
+
+signal read_sig, write_sig: STD_LOGIC;
 -------------------------
 	
 begin
@@ -228,14 +227,27 @@ MorseController: Controller PORT MAP(
 	     start_stop  => start_stop,
 	     speed_select  => speed_select
 	     );
+	     
+read_write_enable: process(read_enable, write_enable)
+begin
+    if read_enable = '1' then 
+        read_sig <= next_char;
+    else read_sig <= '0';
+    end if;
+    
+    if write_enable = '1' then
+        write_sig <= rx_done_tick;
+    else write_sig <= '0';
+    end if;
+end process;
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --Queue
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 MorseQueue: Queue PORT MAP(
          clk => clk,
-	     Write => Write,
-	     read => read,
+	     write => Write_sig,
+	     read => read_sig,
 	     Data_in => rx_data,
 	     Data_out => Data_out,
 	     full => full,
