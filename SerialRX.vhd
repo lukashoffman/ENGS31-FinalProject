@@ -25,7 +25,6 @@ use IEEE.NUMERIC_STD.ALL;
 entity SerialRx is
     Port ( clk : in STD_LOGIC;                  -- 10MHz clock
     RsRx : in STD_LOGIC;                        -- received bit stream
-    rx_shift : out STD_LOGIC;                   -- for testing
     rx_data : out STD_LOGIC_VECTOR (7 downto 0); -- data byte
     rx_done_tick : out STD_LOGIC );             -- data ready tick
 end SerialRx;
