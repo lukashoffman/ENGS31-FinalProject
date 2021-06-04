@@ -5,9 +5,9 @@
 
 # Clock signal
 #Bank = 34, Pin name = CLK,					Sch name = CLK100MHZ
-set_property PACKAGE_PIN W5 [get_ports mclk]
-set_property IOSTANDARD LVCMOS33 [get_ports mclk]
-create_clock -period 20.000 -name sys_clk_pin -waveform {0.000 10.000} -add [get_ports mclk]
+set_property PACKAGE_PIN W5 [get_ports clk]
+set_property IOSTANDARD LVCMOS33 [get_ports clk]
+create_clock -period 20.000 -name sys_clk_pin -waveform {0.000 10.000} -add [get_ports clk]
 
 ## Switches
 #set_property PACKAGE_PIN V17 [get_ports {mode}]					
@@ -61,11 +61,11 @@ create_clock -period 20.000 -name sys_clk_pin -waveform {0.000 10.000} -add [get
 set_property PACKAGE_PIN J1 [get_ports {RsRx}]
 set_property IOSTANDARD LVCMOS33 [get_ports {RsRx}]
 ##Bank = 15, Pin name = IO_L5N_T0_AD9N_15,					Sch name = JA2
-#set_property PACKAGE_PIN L2 [get_ports {spi_s_data}]
-#set_property IOSTANDARD LVCMOS33 [get_ports {spi_s_data}]
+set_property PACKAGE_PIN L2 [get_ports {rx_done_tick_p}]
+set_property IOSTANDARD LVCMOS33 [get_ports {rx_done_tick_p}]
 ##Bank = 15, Pin name = IO_L16N_T2_A27_15,					Sch name = JA3
-#set_property PACKAGE_PIN D17 [get_ports {JA[2]}]
-#set_property IOSTANDARD LVCMOS33 [get_ports {JA[2]}]
+set_property PACKAGE_PIN D17 [get_ports {morse_sig}]
+set_property IOSTANDARD LVCMOS33 [get_ports {morse_sig}]
 ##Bank = 15, Pin name = IO_L16P_T2_A28_15,					Sch name = JA4
 #set_property PACKAGE_PIN G2 [get_ports {spi_sclk}]
 #set_property IOSTANDARD LVCMOS33 [get_ports {spi_sclk}]
