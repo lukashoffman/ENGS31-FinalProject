@@ -48,7 +48,7 @@ signal addflag:     STD_LOGIC := '0';
 signal count_space:  STD_LOGIC := '0';
 signal dit_length_counter:  integer := 0;
 signal dit_tc:              STD_LOGIC := '0';
-signal dit_rate:            integer := 100;
+signal dit_rate:            integer := 100000;
 signal send_read:           STD_LOGIC := '0';
 begin
 
