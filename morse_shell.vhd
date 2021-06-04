@@ -16,22 +16,7 @@ port (
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     --Timing
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    Clk : in  STD_LOGIC;					-- 100 MHz board clock
-   
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    --Controller
-    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    --write_enable  :out std_logic;
-	--read_enable   :out std_logic;
-	--start_stop    :out std_logic;
-	--speed_select  :out std_logic;
-	
-	--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    --Queue
-    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    --Data_out       :out std_logic_vector(7 downto 0);
-	--full           :out std_logic;
-	--empty          :out std_logic;
+    clk : in  STD_LOGIC;					-- 100 MHz board clock
 	          
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     --7 Segment Display
@@ -43,9 +28,9 @@ port (
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     --SCI receiver
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    clk10_p : out std_logic;				-- 10 MHz clock   
-    RsRx_p : out std_logic;				-- serial data stream     
-    rx_done_tick_p : OUT  std_logic;	-- data ready
+    --clk10_p : in std_logic;	        -- 10 MHz clock   
+    RsRx : in std_logic;				-- serial data stream     
+    rx_done_tick_p : out  std_logic;	-- data ready
     
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     --Decoder
@@ -148,7 +133,6 @@ signal clk10: std_logic;				-- 10 MHz clock signal
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --Intermediate Signals:
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
-signal RsRx : std_logic := '0';
 signal rx_data : std_logic_vector(7 downto 0);
 signal rx_done_tick : std_logic;
 
@@ -210,7 +194,7 @@ end process clock_division_control;
 --Outputs
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 -- Map testing signals to toplevel ports
-clk10_p <= clk_en;		
+--clk10_p <= clk_en;		
 rx_done_tick_p <= rx_done_tick;
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -245,7 +229,7 @@ end process;
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 MorseQueue: Queue PORT MAP(
          clk => clk10,
-	     write => Write_sig,
+	     Write => Write_sig,
 	     read => read_sig,
 	     Data_in => rx_data,
 	     Data_out => Data_out,
