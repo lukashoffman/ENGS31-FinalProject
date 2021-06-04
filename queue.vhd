@@ -27,7 +27,7 @@ BEGIN
 
 process(clk)
 begin
-	if falling_edge(clk) then
+	if rising_edge(clk) then
     	if (Write = '1' AND size < 64) then
         	Queue_reg(W_ADDR) <= Data_in;
             if W_ADDR = 63 then
