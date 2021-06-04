@@ -43,7 +43,7 @@ entity Controller is
 end Controller;
 
 architecture Behavioral of Controller is
-type STATE_TYPE is (RECEIVE, FULL, GEN);
+type STATE_TYPE is (RECEIVE, FULL, TRANSITION, GEN);
 signal cstate, nstate:  STATE_TYPE := RECEIVE;
 
 begin
@@ -60,7 +60,7 @@ begin
     nstate <= cstate;
     CASE cstate is
         when RECEIVE =>
-            if submit = '1' then nstate <= GEN;
+            if submit = '1' then nstate <= TRANSITION;
             elsif full_sig = '1' then nstate <= FULL;
             else nstate <= RECEIVE;
             end if;
@@ -71,7 +71,7 @@ begin
             speed_select <= '0';
             
         when FULL =>
-            if submit = '1' then nstate <= GEN;
+            if submit = '1' then nstate <= TRANSITION;
             else nstate <= FULL;
             end if;
             
@@ -80,14 +80,23 @@ begin
             start_stop <= '0';
             speed_select <= '0';
         when GEN =>
-            if empty_sig = '1' then nstate <= RECEIVE;
+            if empty_sig = '1' then nstate <= TRANSITION;
             else nstate <= GEN;
             end if;
             
             write_enable <= '0';
             read_enable <= '1';
-            start_stop <= '1';
+            start_stop <= '0';
             speed_select <= '1';
+        when TRANSITION =>
+            if empty_sig = '1' then nstate <= RECEIVE;
+            else nstate <= GEN;
+            end if;
+            
+            speed_select <= '1';
+            read_enable <= '1';
+            write_enable <= '0';
+            start_stop <= '1';
         when OTHERS =>
             nstate <= RECEIVE;
             
