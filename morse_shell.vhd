@@ -142,7 +142,7 @@ COMPONENT morse_decoder
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --Timing Signals:
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-constant CLOCK_DIVIDER_VALUE: integer := 5;
+signal CLOCK_DIVIDER_VALUE: integer := 5;
 signal clkdiv: integer := 0;			-- the clock divider counter
 signal clk_en: std_logic := '0';		-- terminal count
 signal clk10: std_logic;				-- 10 MHz clock signal
@@ -195,6 +195,13 @@ begin
 		end if;
 	end if;
 end process Clock_divider;
+		
+clock_division_control:	process(speed_select)
+begin
+	if speed_select = '0' then
+		CLOCK_DIVIDER_VALUE <= 5;
+	else CLOCK_DIVIDER_VALUE <= 3125;
+end process clock_division_control;
 ------------------------------
 
 --=============================================================
