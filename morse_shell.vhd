@@ -34,7 +34,8 @@ port (
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     --Decoder
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    morse_sig : out std_logic );
+    morse_sig : out std_logic ;
+    submit:     in std_logic);
    
 end morse_shell;
 
@@ -126,7 +127,7 @@ COMPONENT morse_decoder
 signal CLOCK_DIVIDER_VALUE: integer := 3125;
 signal clkdiv: integer := 0;			-- the clock divider counter
 signal clk_en: std_logic := '0';		-- terminal count
-signal clk10: std_logic;				-- 10 Hz clock signal
+signal sclk: std_logic;				-- 1 mHz clock signal
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --Intermediate Signals:
@@ -137,7 +138,6 @@ signal rx_done_tick : std_logic;
 signal Data_out : std_logic_vector(7 downto 0);
 signal full,empty : std_logic;
 signal next_char : std_logic;
-signal submit: std_logic := '0';
 signal write_enable, read_enable, start_stop : std_logic;
 
 signal to_mux7seg_y3 : std_logic_vector(3 downto 0) := (others => '0');
@@ -160,7 +160,7 @@ begin
 -- The BUFG component puts the slow clock onto the FPGA clocking network
 Slow_clock_buffer: BUFG
       port map (I => clk_en,
-                O => clk10 );
+                O => sclk );
 
 -- Divide the 100 MHz clock down to 20 MHz, then toggling the 
 -- clk_en signal at 20 MHz gives a 10 MHz clock with 50% duty cycle
@@ -195,7 +195,7 @@ MorseController: Controller PORT MAP(
          submit => submit,
 	     full_sig => full,
 	     empty_sig => empty,
-	     clk  => clk10,
+	     clk  => sclk,
 	     write_enable => write_enable,
 	     read_enable  => read_enable,
 	     start_stop  => start_stop
@@ -218,7 +218,7 @@ end process;
 --Queue
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 MorseQueue: Queue PORT MAP(
-         clk => clk10,
+         clk => sclk,
 	     Write => Write_sig,
 	     read => read_sig,
 	     Data_in => rx_data,
@@ -230,7 +230,7 @@ MorseQueue: Queue PORT MAP(
 --SCI receiver
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Receiver: SerialRx PORT MAP(
-		Clk => clk10,				-- receiver is clocked with 10 MHz clock
+		Clk => sclk,				-- receiver is clocked with 10 MHz clock
 		RsRx => RsRx,
 		rx_data => rx_data,
 		rx_done_tick => rx_done_tick  );
@@ -239,8 +239,8 @@ Receiver: SerialRx PORT MAP(
 --Decoder
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Decoder: morse_decoder PORT MAP(
-        clk => clk10,
-        bin => rx_data,
+        clk => sclk,
+        bin => data_out,
         start_stop => start_stop,
         next_char => next_char,
         morse_sig => morse_sig);
