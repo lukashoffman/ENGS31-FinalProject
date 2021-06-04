@@ -1,112 +1,71 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 06/02/2021 11:40:47 PM
--- Design Name: 
--- Module Name: Controller - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
-----------------------------------------------------------------------------------
-
-
+-- Taken from professor's solutions. Modified to work on falling edge.
 library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.std_logic_1164.all;
+use IEEE.numeric_std.all;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+ENTITY Queue IS
+PORT (  clk     :   in  STD_LOGIC;
+        Write   :   in  STD_LOGIC;
+        read    :   in  STD_LOGIC;
+        Data_in :   in  STD_LOGIC_VECTOR(7 downto 0);
+        Data_out:   out STD_LOGIC_VECTOR(7 downto 0);
+        full    :   out STD_LOGIC;
+        empty   :   out STD_LOGIC
+        );      
+end Queue;
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
 
-entity Controller is
-    Port ( submit : in STD_LOGIC;
-           full_sig : in STD_LOGIC;
-           empty_sig : in STD_LOGIC;
-           clk : in STD_LOGIC;
-           write_enable : out STD_LOGIC;
-           read_enable : out STD_LOGIC;
-           start_stop : out STD_LOGIC
-           );
-end Controller;
+architecture behavior of Queue is
 
-architecture Behavioral of Controller is
-type STATE_TYPE is (RECEIVE, FULL, TRANSITION, GEN);
-signal cstate, nstate:  STATE_TYPE := RECEIVE;
-signal transition_counter:  integer := 0;
-constant trans_count_tc: integer := 100000;
-begin
+type regfile is array(0 to 63) of STD_LOGIC_VECTOR(7 downto 0);
+signal Queue_reg : regfile;
 
-state_update: process(clk)
+signal W_ADDR : integer := 0;
+signal R_ADDR : integer := 0;
+signal size   : integer := 0;
+BEGIN
+
+process(clk)
 begin
     if rising_edge(clk) then
-        cstate <= nstate;
-        if cstate = TRANSITION then transition_counter <= transition_counter + 1;
+        if (Write = '1' AND size < 64) then
+            Queue_reg(W_ADDR) <= Data_in;
+            size <= size +1;
+            if W_ADDR = 63 then
+                W_ADDR <= 0;
+            else
+                W_ADDR <= W_ADDR + 1;
+            end if;
+        end if;
+        
+        if (read = '1' AND size > 0) then
+            Queue_reg(R_ADDR) <= (others => '0');
+            size <= size -1;
+            if R_ADDR = 63 then
+                R_ADDR <= 0;
+            else
+                R_ADDR <= R_ADDR + 1;
+            end if;
         end if;
     end if;
 end process;
 
-state_logic: process(cstate, nstate, submit, full_sig, empty_sig)
+process(size)
 begin
-    nstate <= cstate;
-    CASE cstate is
-        when RECEIVE =>
-            if submit = '1' then nstate <= TRANSITION;
-            elsif full_sig = '1' then nstate <= FULL;
-            else nstate <= RECEIVE;
-            end if;
-            
-            transition_counter <= 0;
-            write_enable <= '1';
-            read_enable <= '0';
-            start_stop <= '0';
-            
-        when FULL =>
-            if submit = '1' then nstate <= TRANSITION;
-            else nstate <= FULL;
-            end if;
-            
-            transition_counter <= 0;
-            write_enable <= '0';
-            read_enable <= '0';
-            start_stop <= '0';
-        when GEN =>
-            if empty_sig = '1' then nstate <= TRANSITION;
-            else nstate <= GEN;
-            end if;
-            
-            transition_counter <= 0;
-            write_enable <= '0';
-            read_enable <= '1';
-            start_stop <= '0';
-        when TRANSITION =>
-            if empty_sig = '1' then nstate <= RECEIVE;
-            elsif transition_counter = trans_count_tc then nstate <= GEN;
-            else nstate <= TRANSITION;
-            end if;
-            
-            read_enable <= '1';
-            write_enable <= '0';
-            start_stop <= '1';
-        when OTHERS =>
-            nstate <= RECEIVE;
-            
-            write_enable <= '0';
-            read_enable <= '0';
-            start_stop <= '0';
-    end CASE;
+    if size = 63 then 
+        full <= '1';
+        empty <= '0';
+    elsif size = 0 then 
+        empty <= '1';
+        full <= '0';
+    else
+        empty <= '0';
+        full <= '0';
+    end if;
 end process;
 
-end Behavioral;
+Data_out <= Queue_reg(R_ADDR);
+
+end behavior;
+        
+        

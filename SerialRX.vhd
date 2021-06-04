@@ -209,6 +209,6 @@ datapath: process(clk, shift_en, load_en, CLEAR)
     
 end process datapath;
 
-rx_data <= shift_reg(8 downto 1);
+rx_data <= pload_reg;
 
 end Behavioral;

@@ -54,7 +54,7 @@ begin
 
 test <= bin(bin_pos);
 
-dit_clock_adapter: process(clk, dit_tc, dit_length_counter)
+dit_clock_adapter: process(clk, dit_tc, dit_length_counter, dit_rate)
 begin
     if rising_edge(clk) then
         if dit_tc = '1' then dit_length_counter <= 0;
@@ -68,7 +68,7 @@ begin
     end if;
 end process;
 
-signal_logic: process(enable, decrement, count_space)
+signal_logic: process(enable, decrement, count_space, bin)
 begin
     if enable = '1' AND count_space = '0' AND bin /= "11000000" then morse_sig <= not(decrement); --When not moving between bits or in a space, we are in a dit or dah
     else morse_sig <= '0'; --When moving between bits or in a space

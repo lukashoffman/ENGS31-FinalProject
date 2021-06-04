@@ -46,18 +46,22 @@ architecture Behavioral of Controller is
 type STATE_TYPE is (RECEIVE, FULL, TRANSITION, GEN);
 signal cstate, nstate:  STATE_TYPE := RECEIVE;
 signal transition_counter:  integer := 0;
-constant trans_count_tc: integer := 100000;
+constant trans_count_tc: integer := 50;
 begin
 
 state_update: process(clk)
 begin
     if rising_edge(clk) then
-        cstate <= nstate;
-        
+        cstate <= nstate;        
+    end if;
+end process;
+
+counter_proc: process(clk, cstate, transition_counter)
+begin
+    if rising_edge(clk) then
         if cstate = TRANSITION then transition_counter <= transition_counter + 1;
         else transition_counter <= 0;
         end if;
-        
     end if;
 end process;
 
