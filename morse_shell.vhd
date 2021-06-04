@@ -44,8 +44,7 @@ port (
     --SCI receiver
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     clk10_p : out std_logic;				-- 10 MHz clock   
-    RsRx_p : out std_logic;				-- serial data stream
-    rx_shift_p : out std_logic;			-- Rx register shift           
+    RsRx_p : out std_logic;				-- serial data stream     
     rx_done_tick_p : OUT  std_logic;	-- data ready
     
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -221,14 +220,14 @@ MorseController: Controller PORT MAP(
          submit => submit,
 	     full_sig => full,
 	     empty_sig => empty,
-	     clk  => clk,
+	     clk  => clk10,
 	     write_enable => write_enable,
 	     read_enable  => read_enable,
 	     start_stop  => start_stop,
 	     speed_select  => speed_select
 	     );
 	     
-read_write_enable: process(read_enable, write_enable)
+read_write_enable: process(read_enable, write_enable, next_char)
 begin
     if read_enable = '1' then 
         read_sig <= next_char;
@@ -245,7 +244,7 @@ end process;
 --Queue
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 MorseQueue: Queue PORT MAP(
-         clk => clk,
+         clk => clk10,
 	     write => Write_sig,
 	     read => read_sig,
 	     Data_in => rx_data,
@@ -263,7 +262,7 @@ Receiver: SerialRx PORT MAP(
 		rx_done_tick => rx_done_tick  );
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
---SCI receiver
+--Decoder
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Decoder: morse_decoder PORT MAP(
         clk => clk10,
