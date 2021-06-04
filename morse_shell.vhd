@@ -28,7 +28,6 @@ port (
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     --SCI receiver
     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    --clk10_p : in std_logic;	        -- 10 MHz clock   
     RsRx : in std_logic;				-- serial data stream     
     rx_done_tick_p : out  std_logic;	-- data ready
     
@@ -48,13 +47,12 @@ architecture Behavioral of morse_shell is
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 component Controller is
 	port(submit	       :in std_logic;
-	     full_sig          :in std_logic;
-	     empty_sig         :in std_logic;
+	     full_sig      :in std_logic;
+	     empty_sig     :in std_logic;
 	     clk           :in std_logic;
 	     write_enable  :out std_logic;
 	     read_enable   :out std_logic;
-	     start_stop    :out std_logic;
-	     speed_select  :out std_logic
+	     start_stop    :out std_logic
 	     );
 end component;
 
@@ -125,10 +123,10 @@ COMPONENT morse_decoder
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --Timing Signals:
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-signal CLOCK_DIVIDER_VALUE: integer := 5;
+signal CLOCK_DIVIDER_VALUE: integer := 3125;
 signal clkdiv: integer := 0;			-- the clock divider counter
 signal clk_en: std_logic := '0';		-- terminal count
-signal clk10: std_logic;				-- 10 MHz clock signal
+signal clk10: std_logic;				-- 10 Hz clock signal
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --Intermediate Signals:
@@ -140,13 +138,13 @@ signal Data_out : std_logic_vector(7 downto 0);
 signal full,empty : std_logic;
 signal next_char : std_logic;
 signal submit: std_logic := '0';
-signal write_enable, read_enable, start_stop, speed_select : std_logic;
+signal write_enable, read_enable, start_stop : std_logic;
 
---signal to_mux7seg_y3 : std_logic_vector(3 downto 0) := (others => '0');
---signal to_mux7seg_y2 : std_logic_vector(3 downto 0) := (others => '0');
---signal to_mux7seg_y1 : std_logic_vector(3 downto 0) := (others => '0');
---signal to_mux7seg_y0 : std_logic_vector(3 downto 0) := (others => '0');
---signal measured_voltage : std_logic_vector(15 downto 0) := (others => '0');
+signal to_mux7seg_y3 : std_logic_vector(3 downto 0) := (others => '0');
+signal to_mux7seg_y2 : std_logic_vector(3 downto 0) := (others => '0');
+signal to_mux7seg_y1 : std_logic_vector(3 downto 0) := (others => '0');
+signal to_mux7seg_y0 : std_logic_vector(3 downto 0) := (others => '0');
+signal measured_voltage : std_logic_vector(15 downto 0) := (others => '0');
 
 signal read_sig, write_sig: STD_LOGIC;
 -------------------------
@@ -178,13 +176,6 @@ begin
 	end if;
 end process Clock_divider;
 		
-clock_division_control:	process(speed_select)
-begin
-	if speed_select = '0' then
-		CLOCK_DIVIDER_VALUE <= 5;
-	else CLOCK_DIVIDER_VALUE <= 3125;
-	end if;
-end process clock_division_control;
 ------------------------------
 
 --=============================================================
@@ -207,8 +198,7 @@ MorseController: Controller PORT MAP(
 	     clk  => clk10,
 	     write_enable => write_enable,
 	     read_enable  => read_enable,
-	     start_stop  => start_stop,
-	     speed_select  => speed_select
+	     start_stop  => start_stop
 	     );
 	     
 read_write_enable: process(read_enable, write_enable, next_char, rx_done_tick)
