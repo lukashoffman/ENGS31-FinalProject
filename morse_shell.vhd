@@ -64,8 +64,8 @@ architecture Behavioral of morse_shell is
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 component Controller is
 	port(submit	       :in std_logic;
-	     full          :in std_logic;
-	     empty         :in std_logic;
+	     full_sig          :in std_logic;
+	     empty_sig         :in std_logic;
 	     clk           :in std_logic;
 	     write_enable  :out std_logic;
 	     read_enable   :out std_logic;
@@ -219,8 +219,8 @@ rx_done_tick_p <= rx_done_tick;
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 MorseController: Controller PORT MAP(
          submit => submit,
-	     full => full,
-	     empty => empty,
+	     full_sig => full,
+	     empty_sig => empty,
 	     clk  => clk,
 	     write_enable => write_enable,
 	     read_enable  => read_enable,
