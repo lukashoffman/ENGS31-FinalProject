@@ -53,13 +53,15 @@ state_update: process(clk)
 begin
     if rising_edge(clk) then
         cstate <= nstate;
+        
         if cstate = TRANSITION then transition_counter <= transition_counter + 1;
         else transition_counter <= 0;
         end if;
+        
     end if;
 end process;
 
-state_logic: process(cstate, nstate, submit, full_sig, empty_sig)
+state_logic: process(cstate, submit, full_sig, empty_sig, transition_counter)
 begin
     nstate <= cstate;
     CASE cstate is
