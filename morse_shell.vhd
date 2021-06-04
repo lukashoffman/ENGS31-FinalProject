@@ -201,6 +201,7 @@ begin
 	if speed_select = '0' then
 		CLOCK_DIVIDER_VALUE <= 5;
 	else CLOCK_DIVIDER_VALUE <= 3125;
+	end if;
 end process clock_division_control;
 ------------------------------
 
