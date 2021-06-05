@@ -10,7 +10,8 @@ PORT (  clk     :   in  STD_LOGIC;
         Data_in :   in  STD_LOGIC_VECTOR(7 downto 0);
         Data_out:   out STD_LOGIC_VECTOR(7 downto 0);
         full    :   out STD_LOGIC;
-        empty   :   out STD_LOGIC
+        empty   :   out STD_LOGIC;
+        reset   :   in  STD_LOGIC
         );      
 end Queue;
 
@@ -18,7 +19,7 @@ end Queue;
 architecture behavior of Queue is
 
 type regfile is array(0 to 7) of STD_LOGIC_VECTOR(7 downto 0);
-signal Queue_reg : regfile;
+signal Queue_reg : regfile := (others=>(others=>'0'));
 
 signal W_ADDR : integer := 0;
 signal R_ADDR : integer := 0;
@@ -28,7 +29,12 @@ BEGIN
 process(clk)
 begin
     if rising_edge(clk) then
-        if (Write = '1' AND size < 9) then
+        if (reset = '1') then
+           R_ADDR <= 0;
+           W_ADDR <= 0;
+           size <= 0;
+           queue_reg <= (others=>(others=>'0'));
+        elsif (Write = '1' AND size < 9 AND Data_in /= "00000000") then
             Queue_reg(W_ADDR) <= Data_in;
             size <= size +1;
             if W_ADDR = 7 then
@@ -36,9 +42,7 @@ begin
             else
                 W_ADDR <= W_ADDR + 1;
             end if;
-        end if;
-        
-        if (read = '1' AND size > 0) then
+        elsif (read = '1' AND size > 0) then
             Queue_reg(R_ADDR) <= (others => '0');
             size <= size -1;
             if R_ADDR = 7 then

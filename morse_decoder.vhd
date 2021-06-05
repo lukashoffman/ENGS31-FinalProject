@@ -48,7 +48,7 @@ signal addflag:     STD_LOGIC := '0';
 signal count_space:  STD_LOGIC := '0';
 signal dit_length_counter:  integer := 0;
 signal dit_tc:              STD_LOGIC := '0';
-signal dit_rate:            integer := 1000;
+signal dit_rate:            integer := 1000000;
 signal send_read:           STD_LOGIC := '0';
 begin
 
@@ -70,7 +70,7 @@ end process;
 
 signal_logic: process(enable, decrement, count_space, bin)
 begin
-    if enable = '1' AND count_space = '0' AND bin /= "11000000" then morse_sig <= not(decrement); --When not moving between bits or in a space, we are in a dit or dah
+    if enable = '1' AND count_space = '0' AND bin /= "11000000" AND bin /= "00000000" then morse_sig <= not(decrement); --When not moving between bits or in a space, we are in a dit or dah
     else morse_sig <= '0'; --When moving between bits or in a space
     end if;
 end process;
@@ -159,7 +159,7 @@ begin
         if enable = '0' then bin_pos <= 0;
         elsif decrement = '1' AND bin_pos > 0 then bin_pos <= bin_pos -1;
         
-        elsif decrement = '1' AND bin_pos = 0 AND enable = '1' then
+        elsif decrement = '1' AND bin_pos <= 0 AND enable = '1' then
             bin_pos <= tc_control;
             addflag <= '1';
         end if;

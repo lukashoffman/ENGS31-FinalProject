@@ -38,7 +38,8 @@ entity Controller is
            clk : in STD_LOGIC;
            write_enable : out STD_LOGIC;
            read_enable : out STD_LOGIC;
-           start_stop : out STD_LOGIC
+           start_stop : out STD_LOGIC;
+           reset:       out STD_LOGIC
            );
 end Controller;
 
@@ -46,7 +47,7 @@ architecture Behavioral of Controller is
 type STATE_TYPE is (RECEIVE, FULL, TRANSITION, GEN);
 signal cstate, nstate:  STATE_TYPE := RECEIVE;
 signal transition_counter:  integer := 0;
-constant trans_count_tc: integer := 1000;
+constant trans_count_tc: integer := 1000000;
 begin
 
 state_update: process(clk)
@@ -68,9 +69,10 @@ end process;
 state_logic: process(cstate, submit, full_sig, empty_sig, transition_counter)
 begin
     nstate <= cstate;
+    reset <= '0';
     CASE cstate is
         when RECEIVE =>
-            if submit = '1' then nstate <= TRANSITION;
+            if submit = '1' AND empty_sig = '0' then nstate <= TRANSITION;
             elsif full_sig = '1' then nstate <= FULL;
             else nstate <= RECEIVE;
             end if;
@@ -80,7 +82,7 @@ begin
             start_stop <= '0';
             
         when FULL =>
-            if submit = '1' then nstate <= TRANSITION;
+            if submit = '1' AND empty_sig = '0' then nstate <= TRANSITION;
             else nstate <= FULL;
             end if;
             
@@ -96,7 +98,9 @@ begin
             read_enable <= '1';
             start_stop <= '0';
         when TRANSITION =>
-            if empty_sig = '1' AND transition_counter = trans_count_tc then nstate <= RECEIVE;
+            if empty_sig = '1' AND transition_counter = trans_count_tc then 
+                nstate <= RECEIVE;
+                reset <= '1';
             elsif transition_counter = trans_count_tc then nstate <= GEN;
             else nstate <= TRANSITION;
             end if;
@@ -107,6 +111,7 @@ begin
         when OTHERS =>
             nstate <= RECEIVE;
             
+            reset <= '1';
             write_enable <= '0';
             read_enable <= '0';
             start_stop <= '0';
