@@ -30,12 +30,12 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity morse_decoder is
   Port (
-  	bin:	     in std_logic_vector (7 downto 0); --Our binary encoded morse string
-  	clk:	     in std_logic;     --Divided clock
-  	start_stop:       in std_logic;--Monopulse input to start or stop reading out
-  	next_char:   out std_logic := '0';    --Output to signal the queue to send the next signal
-  	morse_sig:       out std_logic --The output of our signal
-  	);
+    bin:         in std_logic_vector (7 downto 0); --Our binary encoded morse string
+    clk:         in std_logic;     --Divided clock
+    start_stop:       in std_logic;--Monopulse input to start or stop reading out
+    next_char:   out std_logic := '0';    --Output to signal the queue to send the next signal
+    morse_sig:       out std_logic --The output of our signal
+    );
 end morse_decoder;
 
 architecture Behavioral of morse_decoder is
@@ -48,7 +48,7 @@ signal addflag:     STD_LOGIC := '0';
 signal count_space:  STD_LOGIC := '0';
 signal dit_length_counter:  integer := 0;
 signal dit_tc:              STD_LOGIC := '0';
-signal dit_rate:            integer := 100000;
+signal dit_rate:            integer := 1000;
 signal send_read:           STD_LOGIC := '0';
 begin
 
@@ -156,9 +156,10 @@ begin
     end CASE;
     if rising_edge(clk) then
     if dit_tc = '1' then
-        if decrement = '1' AND bin_pos > 0 then bin_pos <= bin_pos -1;
+        if enable = '0' then bin_pos <= 0;
+        elsif decrement = '1' AND bin_pos > 0 then bin_pos <= bin_pos -1;
         
-        elsif decrement = '1' AND bin_pos = 0 then
+        elsif decrement = '1' AND bin_pos = 0 AND enable = '1' then
             bin_pos <= tc_control;
             addflag <= '1';
         end if;

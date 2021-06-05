@@ -17,7 +17,7 @@ end Queue;
 
 architecture behavior of Queue is
 
-type regfile is array(0 to 63) of STD_LOGIC_VECTOR(7 downto 0);
+type regfile is array(0 to 7) of STD_LOGIC_VECTOR(7 downto 0);
 signal Queue_reg : regfile;
 
 signal W_ADDR : integer := 0;
@@ -28,10 +28,10 @@ BEGIN
 process(clk)
 begin
     if rising_edge(clk) then
-        if (Write = '1' AND size < 64) then
+        if (Write = '1' AND size < 9) then
             Queue_reg(W_ADDR) <= Data_in;
             size <= size +1;
-            if W_ADDR = 63 then
+            if W_ADDR = 7 then
                 W_ADDR <= 0;
             else
                 W_ADDR <= W_ADDR + 1;
@@ -41,7 +41,7 @@ begin
         if (read = '1' AND size > 0) then
             Queue_reg(R_ADDR) <= (others => '0');
             size <= size -1;
-            if R_ADDR = 63 then
+            if R_ADDR = 7 then
                 R_ADDR <= 0;
             else
                 R_ADDR <= R_ADDR + 1;
@@ -52,7 +52,7 @@ end process;
 
 process(size)
 begin
-    if size = 63 then 
+    if size = 8 then 
         full <= '1';
         empty <= '0';
     elsif size = 0 then 

@@ -27,32 +27,36 @@ END morse_tb;
  
 ARCHITECTURE behavior OF morse_tb IS 
  
-COMPONENT SerialRx
+COMPONENT morse_shell
 	PORT(
 		clk : IN std_logic;
+		submit: IN std_logic;
 		RsRx : IN std_logic;
-		morse_sig :  out std_logic_vector(7 downto 0));
+		morse_sig :  out std_logic);
 	END COMPONENT;
   
    --Inputs
    signal clk : std_logic := '0';
+   signal morse_clk: std_logic := '0';
    signal RsRx : std_logic := '1';
-
+   signal submit: std_logic := '0';
  	--Outputs
-   signal morse_sig : std_logic_vector(7 downto 0);
+   signal morse_sig : std_logic;
 
    -- Clock period definitions
    constant clk_period : time := 100ns;		-- 10 MHz clock
+   constant morse_clk_period: time := 10 ns;
 	
 	-- Data definitions
 	constant bit_time : time := 104us;		-- 9600 baud
 	--constant bit_time : time := 8.68us;		-- 115,200 baud
-	constant TxData : std_logic_vector(7 downto 0) := "01101001";
+	signal TxData : std_logic_vector(7 downto 0) := "01000101";
 
 	
 BEGIN 
 	-- Instantiate the Unit Under Test (UUT)
-   uut: SerialRx PORT MAP (
+   uut: morse_shell PORT MAP (
+          submit => submit,
           clk => clk,
           RsRx => RsRx,
           morse_sig => morse_sig
@@ -66,10 +70,19 @@ BEGIN
 		clk <= '1';
 		wait for clk_period/2;
    end process;
+   
+   morse_clk_process :process
+   begin
+		morse_clk <= '1';
+		wait for morse_clk_period/2;
+		morse_clk <= '0';
+		wait for morse_clk_period/2;
+   end process;
  
    -- Stimulus process
    stim_proc: process
-   begin		
+   begin
+        TxData <= "01000101";		
 		wait for 100 us;
 		wait for 10.25*clk_period;		
 		
@@ -82,19 +95,26 @@ BEGIN
 		end loop;
 		
 		RsRx <= '1';		-- Stop bit
+		
+		TxData <= "01000010";
 		wait for 200 us;
 		
 		RsRx <= '0';		-- Start bit
 		wait for bit_time;
 		
 		for bitcount in 0 to 7 loop
-			RsRx <= not( TxData(bitcount) );
+			RsRx <= TxData(bitcount);
 			wait for bit_time;
 		end loop;
 		
 		RsRx <= '1';		-- Stop bit
+		wait for 200 us;
+		submit <= '1';
+		wait for 300 ns;
+		submit <= '0';
 		
-		wait;
+		
+		wait for 5000 us;
    end process;
 END;
 
