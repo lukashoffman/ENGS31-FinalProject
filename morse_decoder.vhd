@@ -50,7 +50,7 @@ constant dit_rate:          integer := 1000000; --10 Hz dit rate
 signal send_read:           STD_LOGIC := '0'; --Signal to send the output next_char signal
 begin
 
-dit_clock_adapter: process(clk, dit_tc, dit_length_counter, dit_rate)
+dit_clock_adapter: process(clk, dit_tc, dit_length_counter)
 --A simple counter for adapting our generation speed.
 begin
     if rising_edge(clk) then --Synchronous clock update
