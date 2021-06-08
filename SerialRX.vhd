@@ -1,14 +1,14 @@
 ----------------------------------------------------------------------------------
 -- Company: CS56/ ENGS31 Digital Electronics
--- Engineer: Aadhya Kocha
+-- Engineer: Aadhya Kocha and Lukas Hoffman
 -- 
 -- Create Date: 05/30/2021 01:02:44 AM
--- Design Name: 
+-- Design Name: Morse code generator
 -- Module Name: SerialRX - Behavioral
 -- Project Name: SCI receiver- Final Project
--- Target Devices: 
--- Tool Versions: 
--- Description: 
+-- Target Devices: Basys 3
+-- Tool Versions: Vivado 2018.3
+-- Description: Receivers a UART signal as on RsRx port
 -- 
 -- Dependencies: 
 -- 
@@ -49,7 +49,6 @@ signal next_state    : state_type;
 signal tc, count_en : std_logic := '0';         -- baud counter for no. of full clk cycles (T)
 signal tc2, count2_en : std_logic := '0';       -- baud counter for no. of half clk cycles (T/2)
 signal shift_tc, shift_count_en : std_logic := '0';     -- bit counter for bits in shift reg
-signal tc_bit : std_logic := '0';
 signal shift_en, load_en : std_logic := '0';
 
 begin
@@ -69,7 +68,7 @@ stateUpdate: process(clk)
         end if;
     end process stateUpdate;
 
-nextStateLogic: process(current_state, count_en, count2_en, shift_count_en, shift_en, load_en, shift_tc, tc, tc2, tc_bit, sync_RsRx)
+nextStateLogic: process(current_state, count_en, count2_en, shift_count_en, shift_en, load_en, shift_tc, tc, tc2, sync_RsRx)
     begin
     --defaults
     next_state <= current_state;
@@ -82,45 +81,43 @@ nextStateLogic: process(current_state, count_en, count2_en, shift_count_en, shif
     
 		case (current_state) is
 		
-        	when s_idle =>  if sync_RsRx = '0' then
+        	when s_idle =>  if sync_RsRx = '0' then        -- RsRx data sent
         	                    next_state <= s_wait_tby2;
                             end if;
                           
-            when s_wait_tby2 =>   count2_en <= '1';
-                                  if tc2 = '1' then
-                                    next_state <= s_shift;
+            when s_wait_tby2 =>   count2_en <= '1';        -- start counting clock edges N/2
+                                  if tc2 = '1' then        -- when N/2 reached
+                                    next_state <= s_shift; -- move to shift register as start bit
                                   end if;
-                                   
-            -- tell datapath through sum_en to start summing                 
-            when s_wait_t =>   count_en <= '1';
-                                if shift_tc = '1' then        --shift register full
-                                    next_state <= s_ready;
-                                elsif tc = '1' then
-                                    next_state <= s_shift;
+                                                  
+            when s_wait_t =>   count_en <= '1';            -- start counting clock edges N
+                                if shift_tc = '1' then     -- shift register full
+                                    next_state <= s_ready; -- if rull move to load register
+                                elsif tc = '1' then        -- when N reached
+                                    next_state <= s_shift;  -- shift bit into shift register
                                 else
-                                    next_state <= s_wait_t;
+                                    next_state <= s_wait_t; -- wait for clock edge
                                 end if;
                          
-            when s_shift =>	    shift_count_en <= '1';
-                                shift_en <= '1';
-                                if shift_tc = '1' then        --shift register full
-                                    next_state <= s_ready;
+            when s_shift =>	    shift_count_en <= '1';      -- start counting bits in shift register
+                                shift_en <= '1';            -- enable shifting to datapath
+                                if shift_tc = '1' then      -- shift register full
+                                    next_state <= s_ready;  -- move to load register
                                 else
                                     next_state <= s_wait_t;
                                 end if;
-            
-            -- tell datapath through reset_en to reset sum to 0                    
-            when s_ready =>     load_en <= '1';
-                                rx_done_tick <= '1';
-                                tc_bit <= '0';
-                                next_state <= s_idle;                    
+                                
+            when s_ready =>     load_en <= '1';             -- enable loading to datapath
+                                rx_done_tick <= '1';        -- rx_done_tick output to next components
+                                next_state <= s_idle;       -- go wait for more user input
                             
            	when others =>  next_state <= s_idle;
             
         end case;
         
     end process nextStateLogic;
-        
+
+-- count N/2 clock edges        
 tc2Counter: process(count2_en, clk, tc2)
     begin
         if rising_edge(clk) then
@@ -133,6 +130,7 @@ tc2Counter: process(count2_en, clk, tc2)
 			
 	end process tc2Counter;
 
+-- count N clock edges  
 tcCounter: process(count_en, clk, tc)
     begin
         if rising_edge(clk) then
@@ -145,6 +143,7 @@ tcCounter: process(count_en, clk, tc)
 			
 	end process tcCounter;
 	
+-- count number of bits in shift register
 shiftCounter: process(shift_count_en, clk, shift_tc)
     begin
         if rising_edge(clk) then
@@ -156,7 +155,8 @@ shiftCounter: process(shift_count_en, clk, shift_tc)
         end if;
 			
 	end process shiftCounter;
-	
+
+-- enable shift_tc	
 shiftTcLimit: process(shift_count)
 	begin
 	    if shift_count >= 10 then
@@ -167,6 +167,7 @@ shiftTcLimit: process(shift_count)
     
 end process shiftTcLimit;
 
+-- enable tc2
 tcLimit: process(count)
 	begin
 	    if count >= BAUD_PERIOD then
@@ -177,6 +178,7 @@ tcLimit: process(count)
     
 end process tcLimit;
 
+-- enable tc2
 tc2Limit: process(count2)
 	begin
 	    if count2 >= BAUD_PERIOD/2 then
@@ -192,11 +194,9 @@ datapath: process(clk, shift_en, load_en, CLEAR)
         if rising_edge(clk) then
         
             if CLEAR = '0' then
-               -- if SHIFT = '1' then
                     if shift_en = '1' then
                         shift_reg <= sync_RsRx & shift_reg(9 downto 1); --shifted to make bit sizes compatible
                     end if;
-               -- end if;
             else
                 shift_reg <= (others => '0');
             end if;
