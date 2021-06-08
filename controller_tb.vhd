@@ -1,19 +1,19 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
+-- Company: ENGS 31 / COSC 56
+-- Engineer: Aadhya Kocha and Lukas Hoffman
 -- 
 -- Create Date: 06/03/2021 07:24:23 PM
--- Design Name: 
+-- Design Name: Controller Testbench
 -- Module Name: Controller_tb - Behavioral
--- Project Name: 
+-- Project Name: Morse Code Generator
 -- Target Devices: 
 -- Tool Versions: 
--- Description: 
+-- Description: A Testbench for the Morse Code Generator FSM
 -- 
 -- Dependencies: 
 -- 
 -- Revision:
--- Revision 0.01 - File Created
+-- Revision 1.0 Working simple testbench
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
