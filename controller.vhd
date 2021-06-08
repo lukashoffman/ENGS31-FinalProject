@@ -1,19 +1,19 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
+-- Company: Engs 31/ COSC 56
+-- Engineer: Lukas Hoffman
 -- 
 -- Create Date: 06/02/2021 11:40:47 PM
--- Design Name: 
+-- Design Name: Morse Decoder Controller
 -- Module Name: Controller - Behavioral
--- Project Name: 
--- Target Devices: 
+-- Project Name: Morse Decoder
+-- Target Devices: Basys3
 -- Tool Versions: 
--- Description: 
+-- Description: A finite state machine based controller for a morse code converter
 -- 
 -- Dependencies: 
 -- 
 -- Revision:
--- Revision 0.01 - File Created
+-- Revision 1.1 Working version with comments
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
@@ -32,21 +32,21 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity Controller is
-    Port ( submit : in STD_LOGIC;
-           full_sig : in STD_LOGIC;
-           empty_sig : in STD_LOGIC;
-           clk : in STD_LOGIC;
+    Port ( submit : in STD_LOGIC;       --User input to submit the entered morse
+           full_sig : in STD_LOGIC;     --Memory full signal from the queue
+           empty_sig : in STD_LOGIC;    --Empty signal from the queue
+           clk : in STD_LOGIC;          --10 Mhz clock
            write_enable : out STD_LOGIC;
            read_enable : out STD_LOGIC;
-           start_stop : out STD_LOGIC;
-           reset:       out STD_LOGIC
+           start_stop : out STD_LOGIC;  --Start/stop signal for the decoder
+           reset:       out STD_LOGIC   --Queue reset signal
            );
 end Controller;
 
 architecture Behavioral of Controller is
 type STATE_TYPE is (RECEIVE, FULL, TRANSITION, GEN);
 signal cstate, nstate:  STATE_TYPE := RECEIVE;
-signal transition_counter:  integer := 0;
+signal transition_counter:  integer := 0; --We want to maintain the transition state for a full timer cycle of the decoder
 constant trans_count_tc: integer := 1000000;
 begin
 
@@ -59,6 +59,7 @@ end process;
 
 counter_proc: process(clk, cstate, transition_counter)
 begin
+    --Count up in transition, otherwise set the counter to 0
     if rising_edge(clk) then
         if cstate = TRANSITION then transition_counter <= transition_counter + 1;
         else transition_counter <= 0;
@@ -72,8 +73,9 @@ begin
     reset <= '0';
     CASE cstate is
         when RECEIVE =>
-            if submit = '1' AND empty_sig = '0' then nstate <= TRANSITION;
-            elsif full_sig = '1' then nstate <= FULL;
+            --Allow the Receiver to write to the queue, and do not allow reads from the decoder
+            if submit = '1' AND empty_sig = '0' then nstate <= TRANSITION; --Move to output if not empty on submission
+            elsif full_sig = '1' then nstate <= FULL; --Go to full to disallow inputs
             else nstate <= RECEIVE;
             end if;
             
@@ -82,6 +84,7 @@ begin
             start_stop <= '0';
             
         when FULL =>
+            --Do not allow write inputs, only submit inputs
             if submit = '1' AND empty_sig = '0' then nstate <= TRANSITION;
             else nstate <= FULL;
             end if;
@@ -90,6 +93,7 @@ begin
             read_enable <= '0';
             start_stop <= '0';
         when GEN =>
+            --Allow the decoder to read from the queue until it is empty
             if empty_sig = '1' then nstate <= TRANSITION;
             else nstate <= GEN;
             end if;
@@ -98,9 +102,10 @@ begin
             read_enable <= '1';
             start_stop <= '0';
         when TRANSITION =>
+            --Stay in this state for one cycle of the decoder to ensure it enables, and again coming back to ensure it disables
             if empty_sig = '1' AND transition_counter = trans_count_tc then 
                 nstate <= RECEIVE;
-                reset <= '1';
+                reset <= '1'; --Reset the queue before we start receiving again
             elsif transition_counter = trans_count_tc then nstate <= GEN;
             else nstate <= TRANSITION;
             end if;
@@ -109,6 +114,7 @@ begin
             write_enable <= '0';
             start_stop <= '1';
         when OTHERS =>
+            --In case of a fault and an undefined state, reset everything.
             nstate <= RECEIVE;
             
             reset <= '1';

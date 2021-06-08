@@ -1,4 +1,7 @@
--- Taken from professor's solutions. Modified to work on falling edge.
+-- Taken from professor's solutions
+--Modifications: tracking of size, and full and empty signals
+--               reset button
+--               default to zeroes rather than undefined
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
@@ -30,11 +33,13 @@ process(clk)
 begin
     if rising_edge(clk) then
         if (reset = '1') then
+            --Reset everything
            R_ADDR <= 0;
            W_ADDR <= 0;
            size <= 0;
            queue_reg <= (others=>(others=>'0'));
-        elsif (Write = '1' AND size < 9 AND Data_in /= "00000000") then
+
+        elsif (Write = '1' AND size < 9 AND Data_in /= "00000000") then --Do not allow all zeroes to be written as an input
             Queue_reg(W_ADDR) <= Data_in;
             size <= size +1;
             if W_ADDR = 7 then
@@ -42,7 +47,7 @@ begin
             else
                 W_ADDR <= W_ADDR + 1;
             end if;
-        elsif (read = '1' AND size > 0) then
+        elsif (read = '1' AND size > 0) then --Do not allow read from an empty queue
             Queue_reg(R_ADDR) <= (others => '0');
             size <= size -1;
             if R_ADDR = 7 then
@@ -55,6 +60,7 @@ begin
 end process;
 
 process(size)
+--Output control signals for the FSM
 begin
     if size = 8 then 
         full <= '1';

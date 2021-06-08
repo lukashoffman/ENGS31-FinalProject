@@ -86,18 +86,6 @@ component mux7seg is
 end component;
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
---7 Segment Display
---+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
---COMPONENT blk_mem_gen_0
---  PORT ( 
---    clka : IN STD_LOGIC;
---    ena : IN STD_LOGIC;
---    addra : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
---    douta : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)
---  );
---END COMPONENT;
- 
---+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --SCI Serial receiver
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 COMPONENT SerialRx
@@ -172,14 +160,15 @@ begin
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --10 MHz Serial Clock (clk) Generation
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
 -- Clock buffer for 10 MHz clock
 -- The BUFG component puts the slow clock onto the FPGA clocking network
 Slow_clock_buffer: BUFG
       port map (I => clk_en,
                 O => sclk );
 
--- Divide the 100 MHz clock down to 20 MHz, then toggling the 
--- clk_en signal at 20 MHz gives a 10 MHz clock with 50% duty cycle
+-- Divide the 100 MHz clock down to 10 Mhz
 Clock_divider: process(clk)
 begin
     if rising_edge(clk) then
@@ -191,9 +180,6 @@ begin
         end if;
     end if;
 end process Clock_divider;
--- Divide the 100 MHz clock down to 20 MHz, then toggling the 
--- clk_en signal at 20 MHz gives a 10 MHz clock with 50% duty cycle		
-------------------------------
 
 --=============================================================
 --Port Maps:
@@ -202,7 +188,6 @@ end process Clock_divider;
 --Outputs
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 -- Map testing signals to toplevel ports
---clk10_p <= clk_en;		
 rx_done_tick_p <= rx_done_tick;
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -222,18 +207,19 @@ MorseController: Controller PORT MAP(
 read_write_enable: process(clk, read_enable, write_enable, next_char, rx_done_tick, write_ff3)
 begin
     if rising_edge(clk) then
+        --Flip flops ensure correct delay timing for the write_enable
         write_ff1 <= rx_done_tick;
         write_ff2 <= write_ff1;
         write_ff3 <= write_ff2;
     end if;
     
     if read_enable = '1' then 
-        read_sig <= next_char;
+        read_sig <= next_char; --Allow passthrough from the next_char signal from the decoder
     else read_sig <= '0';
     end if;
     
     if write_enable = '1' then
-        write_sig <= write_ff3;
+        write_sig <= write_ff3; --Allow delayed passthrough from the rx_done_tick of the SCI receiver
     else write_sig <= '0';
     end if;
 end process;
@@ -276,6 +262,7 @@ Decoder: morse_decoder PORT MAP(
 --Input Multiplexer
 display_mux: process(rx_data)
 begin
+        --Display the received char's hex value on the 7 seg
         to_mux7seg_y3 <= "0000"; --x"00"
         to_mux7seg_y2 <= "0000"; --x"10
         to_mux7seg_y1 <= rx_data(7 downto 4);
@@ -295,6 +282,7 @@ display: mux7seg port map(
     dp => dp,
     an => an);
     
+    --Map both the LED and audio to the same signal
     led <= out_sig;
     morse_sig <= out_sig;
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
