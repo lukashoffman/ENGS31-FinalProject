@@ -1,19 +1,19 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
+-- Company: ENGS 31 / COSC 56
+-- Engineer: Aadhya Kocha & Lukas Hoffman
 -- 
 -- Create Date: 06/04/2021 07:54:12 PM
--- Design Name: 
+-- Design Name: Morse Shell Testbench
 -- Module Name: morse_tb - Behavioral
--- Project Name: 
+-- Project Name: Morse Code Generator
 -- Target Devices: 
 -- Tool Versions: 
--- Description: 
+-- Description: Testbench for a Morse Code Generator
 -- 
 -- Dependencies: 
 -- 
 -- Revision:
--- Revision 0.01 - File Created
+-- Revision 1.0 - Final Version
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
